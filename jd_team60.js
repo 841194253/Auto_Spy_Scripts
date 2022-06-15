@@ -357,7 +357,7 @@ function joinShop(openCardLink) {
     await $.wait(1000)
     await getshopactivityId()
     let activityId = ``
-    let h5st = "20220412164641157%3B197ee697d50ca316f3582488c7fa9d34%3B169f1%3Btk02wd9451deb18n1P31JunSGTfZhmebuivwsEwYWUQF1ZkpdtuSmKOES5DnIMFdyOvKikdguelIiBUnJbeCgoNlcEvv%3B6e090cbde337590b51a514718fee391d46fece6b953ed1084a052f6d76ffbd92%3B3.0%3B1649753201157"
+    let h5st = "20220614102046318%3B7327310984571307%3Bef79a%3Btk02wa31b1c7718neoZNHBp75rw4pE%2Fw7fXko2SdFCd1vIeWy005pEHdm0lw2CimWpaw3qc9il8r9xVLHp%2Bhzmo%2B4swg%3Bdd9526fc08234276b392435c8623f4a737e07d4503fab90bf2cd98d2a3a778ac%3B3.0%3B1655173246318"
     //let h5st = await h5stSign(body) || 'undefined'
     const options = {
       url: `https://api.m.jd.com/client.action?appid=jd_shop_member&functionId=bindWithVender&body=${body}&clientVersion=9.2.0&client=H5&uuid=88888&h5st=${h5st}`,
