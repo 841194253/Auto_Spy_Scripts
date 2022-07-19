@@ -1,8 +1,8 @@
 // noinspection JSUnresolvedFunction,JSUnresolvedVariable
-// 需要安装NodeJS 依赖 axios date-fns
+
 const axios = require('axios');
 const fs = require("fs");
-const { format } = require("date-fns");
+const {format} = require("date-fns");
 const notify = require('./sendNotify');
 const jdCookieNode = require('./jdCookie.js');
 const CryptoJS = require("crypto-js");
@@ -12,6 +12,9 @@ let testMode = process.env.TEST_MODE?.includes('on') ? true
     : __dirname.includes("magic")
 
 let mode = process.env.MODE ? process.env.MODE : "local"
+
+let apiToken = process.env.M_API_TOKEN ? process.env.M_API_TOKEN : ""
+let apiSignUrl = process.env.M_API_SIGN_URL ? process.env.M_API_SIGN_URL : "http://158.101.153.139:19840/sign"
 
 let wxBlackCookiePin = process.env.M_WX_BLACK_COOKIE_PIN
     ? process.env.M_WX_BLACK_COOKIE_PIN : ''
@@ -77,13 +80,13 @@ const ISV_OBFUSCATOR = {
         'adid=7B411CD9-D62C-425B-B083-9AFC49B94228&area=16_1332_42932_43102&body=%7B%22url%22%3A%22https%3A%5C/%5C/cjhydz-isv.isvjcloud.com%22%2C%22id%22%3A%22%22%7D&build=167541&client=apple&clientVersion=9.4.0&d_brand=apple&d_model=iPhone8%2C1&eid=eidId10b812191seBCFGmtbeTX2vXF3lbgDAVwQhSA8wKqj6OA9J4foPQm3UzRwrrLdO23B3E2wCUY/bODH01VnxiEnAUvoM6SiEnmP3IPqRuO%2By/%2BZo&isBackground=N&joycious=48&lang=zh_CN&networkType=wifi&networklibtype=JDNetworkBaseAF&openudid=2f7578cb634065f9beae94d013f172e197d62283&osVersion=13.1.2&partner=apple&rfs=0000&scope=11&screen=750%2A1334&sign=60bde51b4b7f7ff6e1bc1f473ecf3d41&st=1613720203903&sv=110&uts=0f31TVRjBStG9NoZJdXLGd939Wv4AlsWNAeL1nxafUsZqiV4NLsVElz6AjC4L7tsnZ1loeT2A8Z5/KfI/YoJAUfJzTd8kCedfnLG522ydI0p40oi8hT2p2sNZiIIRYCfjIr7IAL%2BFkLsrWdSiPZP5QLptc8Cy4Od6/cdYidClR0NwPMd58K5J9narz78y9ocGe8uTfyBIoA9aCd/X3Muxw%3D%3D&uuid=hjudwgohxzVu96krv/T6Hg%3D%3D&wifiBssid=9cf90c586c4468e00678545b16176ed2'
     ],
 }
-const $ = axios.create({ timeout: 30000 });
+const $ = axios.create({timeout: 30000});
 $.defaults.headers['Accept'] = '*/*';
 $.defaults.headers['Connection'] = 'keep-alive';
 $.defaults.headers['Accept-Language'] = "zh-CN,zh-Hans;q=0.9";
 $.defaults.headers['Accept-Encoding'] = "gzip, deflate, br";
 
-function uuid (x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") {
+function uuid(x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") {
     return x.replace(/[xy]/g, function (x) {
         const r = 16 * Math.random() | 0, n = "x" === x ? r : 3 & r | 8;
         return n.toString(36)
@@ -109,7 +112,7 @@ class Env {
         this.accounts = {};
     }
 
-    async run (data = {
+    async run(data = {
         wait: [1000, 2000],
         bot: false,
         delimiter: '',
@@ -121,7 +124,7 @@ class Env {
     }) {
         console.log('运行参数：', data);
         this.filename = process.argv[1];
-        //console.log(`${this.now()} ${this.name} ${this.filename} 开始运行...`);
+        console.log(`${this.now()} ${this.name} ${this.filename} 开始运行...`);
         this.start = this.timestamp();
         let accounts = "";
         if (__dirname.includes("magic")) {
@@ -227,26 +230,26 @@ class Env {
             }
         }
         await this.after()
-        console.log(`${this.name} \n${this.now()} 运行结束,耗时 ${this.timestamp()
-            - this.start}ms\n`)
+        console.log(`${this.now()} ${this.name} 运行结束,耗时 ${this.timestamp()
+        - this.start}ms\n`)
         testMode && this.msg.length > 0 ? console.log(this.msg.join("\n")) : ''
         if (!data?.o2o) {
             await this.send();
         }
     }
 
-    async config () {
+    async config() {
 
     }
 
-    delBlackCK () {
+    delBlackCK() {
         let strArrTemp = []
         for (let i = 0; i < cookies.length; i++) {
             if (cookies[i]) {
                 let cookie = cookies[i]
                 let pt_pin = decodeURIComponent(
                     cookie.match(/pt_pin=(.+?);/) && cookie.match(
-                        /pt_pin=(.+?);/)[1]);
+                    /pt_pin=(.+?);/)[1]);
                 if (wxBlackCookiePin.includes(pt_pin)) {
                     this.log("剔除黑号CK:" + pt_pin);
                     continue;
@@ -257,15 +260,15 @@ class Env {
         cookies = strArrTemp;
     }
 
-    me () {
+    me() {
         return this.ext[this.index - 1]
     }
 
-    finish () {
+    finish() {
         this.ext[this.index - 1].finish = true
     }
 
-    __as (es) {
+    __as(es) {
         console.log(es)
 
         let b = [];
@@ -289,12 +292,12 @@ class Env {
         return b
     }
 
-    deleteCookie () {
+    deleteCookie() {
         delete this.cookies[this.index - 1]
         return {};
     }
 
-    groupBy (arr, fn) {
+    groupBy(arr, fn) {
         const data = {};
         arr.forEach(function (o) {
             const k = fn(o);
@@ -305,7 +308,7 @@ class Env {
         return data;
     }
 
-    async send () {
+    async send() {
         if (this.msg?.length > 0) {
             this.msg.push(
                 `\n时间：${this.now()} 时长：${((this.timestamp() - this.start)
@@ -319,10 +322,10 @@ class Env {
         }
     }
 
-    async verify () {
+    async verify() {
         let fn = this.filename
 
-        function av (s) {
+        function av(s) {
             return s.trim().match(/([a-z_])*$/)[0];
         }
 
@@ -351,7 +354,7 @@ class Env {
         this.appId ? this.algo = await this._algo() : '';
     }
 
-    async wait (min, max) {
+    async wait(min, max) {
         if (min < 0) {
             return;
         }
@@ -363,11 +366,11 @@ class Env {
         }
     }
 
-    putMsg (msg) {
+    putMsg(msg) {
         msg += ''
         this.log(msg)
         let r = [[' ', ''], ['优惠券', '券'], ['东券', '券'], ['店铺', ''],
-        ['恭喜', ''], ['获得', '']]
+            ['恭喜', ''], ['获得', '']]
         for (let ele of r) {
             msg = msg.replace(ele[0], ele[1])
         }
@@ -379,44 +382,44 @@ class Env {
             if (this.msg.length > 0 && this.msg[this.msg.length - 1].includes(
                 username)) {
                 this.msg[this.msg.length - 1] = this.msg[this.msg.length
-                    - 1].split(" ")[0] + '' + [this.msg[this.msg.length - 1].split(
-                        " ")[1], msg].join(',')
+                - 1].split(" ")[0] + '' + [this.msg[this.msg.length - 1].split(
+                    " ")[1], msg].join(',')
             } else {
                 this.msg.push(`【${username}】${msg}`)
             }
         }
     }
 
-    md5 (str) {
+    md5(str) {
         return CryptoJS.MD5(str).toString()
     }
 
-    HmacSHA256 (param, key) {
+    HmacSHA256(param, key) {
         return CryptoJS.HmacSHA256(param, key).toString()
     }
 
-    log (...msg) {
+    log(...msg) {
         this.s ? console.log(...msg) : console.log(
-            `${this.accounts[this.username] || this.username}\n${this.now()} `,
+            `${this.now()} ${this.accounts[this.username] || this.username}`,
             ...msg)
     }
 
     //并
-    union (a, b) {
+    union(a, b) {
         return a.concat(b.filter(o => !a.includes(o)))
     }
 
     //交
-    intersection (a, b) {
+    intersection(a, b) {
         return a.filter(o => b.includes(o))
     }
 
     //交
-    different (a, b) {
+    different(a, b) {
         return a.concat(b).filter(o => a.includes(o) && !b.includes(o))
     }
 
-    build (url) {
+    build(url) {
         if (url.match(/&callback=(jsonpCBK(.*))&/)) {
             let cb = url.match(/&callback=(jsonpCBK(.*))&/);
             url = url.replace(cb[1], this.randomCallback(cb[2].length || 0))
@@ -439,16 +442,16 @@ class Env {
             }
             stk.split(',').map((item, index) => {
                 st += `${item}:${this.getQueryString(url, item)}${index
-                    === stk.split(',').length - 1 ? '' : '&'}`;
+                === stk.split(',').length - 1 ? '' : '&'}`;
             })
             ens = encodeURIComponent(
                 [''.concat(ts), ''.concat(fp),
-                ''.concat(this.appId), ''.concat(tk),
-                ''.concat(CryptoJS.HmacSHA256(st, hash.toString()).toString(
-                    CryptoJS.enc.Hex))].join(';'));
+                    ''.concat(this.appId), ''.concat(tk),
+                    ''.concat(CryptoJS.HmacSHA256(st, hash.toString()).toString(
+                        CryptoJS.enc.Hex))].join(';'));
             if (url.match(/[?|&]h5st=(.*?)&/)) {
                 url = url.replace(url.match(/[?|&]h5st=(.*?)&/)[1], 'H5ST')
-                    .replace(/H5ST/, ens)
+                .replace(/H5ST/, ens)
             }
             let matchArr = [/[?|&]_time=(\d+)/, /[?|&]__t=(\d+)/,
                 /[?|&]_ts=(\d+)/,
@@ -482,7 +485,7 @@ class Env {
         return url;
     }
 
-    getQueryString (url, name) {
+    getQueryString(url, name) {
         let reg = new RegExp("(^|[&?])" + name + "=([^&]*)(&|$)");
         let r = url.match(reg);
         if (r != null) {
@@ -491,23 +494,23 @@ class Env {
         return '';
     }
 
-    unique (arr) {
+    unique(arr) {
         return Array.from(new Set(arr))
     }
 
-    async logic () {
+    async logic() {
         console.log("default logic")
     }
 
-    async before () {
+    async before() {
         return -1;
     }
 
-    async after () {
+    async after() {
         return -1;
     }
 
-    tryLock (username, key) {
+    tryLock(username, key) {
         try {
             fs.accessSync(`/jd/log/lock/${key}_${username}`);
             return false;
@@ -516,7 +519,7 @@ class Env {
         }
     }
 
-    setLock (username, key) {
+    setLock(username, key) {
         try {
             try {
                 fs.accessSync(`/jd/log/lock`);
@@ -530,7 +533,7 @@ class Env {
         }
     }
 
-    match (pattern, string) {
+    match(pattern, string) {
         pattern = (pattern instanceof Array) ? pattern : [pattern];
         for (let pat of pattern) {
             const match = pat.exec(string);
@@ -552,7 +555,7 @@ class Env {
         return '';
     }
 
-    matchAll (pattern, string) {
+    matchAll(pattern, string) {
         pattern = (pattern instanceof Array) ? pattern : [pattern];
         let match;
         let result = [];
@@ -575,7 +578,7 @@ class Env {
         return result;
     }
 
-    async countdown (mode = 1, s = 200) {
+    async countdown(mode = 1, s = 200) {
         let d = new Date();
         switch (mode) {
             case 1:
@@ -606,7 +609,7 @@ class Env {
         }
     }
 
-    readFileSync (path) {
+    readFileSync(path) {
         try {
             return fs.readFileSync(path).toString();
         } catch (e) {
@@ -616,50 +619,50 @@ class Env {
         }
     }
 
-    writeFileSync (path, data) {
+    writeFileSync(path, data) {
         fs.writeFileSync(path, data)
     }
 
-    random (min, max) {
+    random(min, max) {
         return Math.min(Math.floor(min + Math.random() * (max - min)), max);
 
     }
 
-    async notify (text, desc) {
+    async notify(text, desc) {
         return notify.sendNotify(text, desc);
     }
 
-    async get (url, headers) {
+    async get(url, headers) {
         url = this.appId ? this.build(url) : url
         return new Promise((resolve, reject) => {
-            $.get(url, { headers: headers }).then(
+            $.get(url, {headers: headers}).then(
                 data => resolve(this.handler(data) || data))
-                .catch(e => reject(e))
+            .catch(e => reject(e))
         })
     }
 
-    async post (url, body, headers) {
+    async post(url, body, headers) {
         url = this.appId ? this.build(url) : url
         return new Promise((resolve, reject) => {
-            $.post(url, body, { headers: headers })
-                .then(data => resolve(this.handler(data) || data))
-                .catch(e => reject(e));
+            $.post(url, body, {headers: headers})
+            .then(data => resolve(this.handler(data) || data))
+            .catch(e => reject(e));
         })
     }
 
-    async request (url, headers, body) {
+    async request(url, headers, body) {
         return new Promise((resolve, reject) => {
-            let __config = headers?.headers ? headers : { headers: headers };
+            let __config = headers?.headers ? headers : {headers: headers};
             (body ? $.post(url, body, __config) : $.get(url, __config))
-                .then(data => {
-                    this.__lt(data);
-                    resolve(data)
-                })
-                .catch(e => reject(e));
+            .then(data => {
+                this.__lt(data);
+                resolve(data)
+            })
+            .catch(e => reject(e));
         })
     }
 
-    __lt (data) {
+    __lt(data) {
         if (this.appId.length !== 2) {
             return
         }
@@ -704,7 +707,7 @@ class Env {
         // testMode ? this.log('lz', this.lz) : ''
     }
 
-    handler (res) {
+    handler(res) {
         let data = res?.data || res?.body || res;
         if (!data) {
             return;
@@ -713,14 +716,14 @@ class Env {
             data = data.replace(/[\n\r| ]/g, '');
             if (data.includes("try{jsonpCB")) {
                 data = data.replace(/try{jsonpCB.*\({/, '{')
-                    .replace(/}\)([;])?}catch\(e\){}/, '}')
+                .replace(/}\)([;])?}catch\(e\){}/, '}')
             } else if (data.includes('jsonpCB')) {
                 let st = data.replace(/[\n\r]/g, '').replace(/jsonpCB.*\({/,
                     '{');
                 data = st.substring(0, st.length - 1)
             } else if (data.match(/try{.*\({/)) {
                 data = data.replace(/try{.*\({/, '{')
-                    .replace(/}\)([;])?}catch\(e\){}/, '}')
+                .replace(/}\)([;])?}catch\(e\){}/, '}')
             } else {
                 testMode ? console.log('例外', data) : ''
                 data = /.*?({.*}).*/g.exec(data)[1]
@@ -735,7 +738,7 @@ class Env {
         return data;
     }
 
-    randomNum (length) {
+    randomNum(length) {
         length = length || 32;
         let t = "0123456789", a = t.length, n = '';
         for (let i = 0; i < length; i++) {
@@ -744,18 +747,18 @@ class Env {
         return n
     }
 
-    randomString (e) {
+    randomString(e) {
         return this.uuid()
     }
 
-    uuid (x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") {
+    uuid(x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") {
         return uuid(x)
     }
 
-    async unfollow (shopId = this.shopId) {
+    async unfollow(shopId = this.shopId) {
         let url = 'https://api.m.jd.com/client.action?g_ty=ls&g_tk=518274330'
         let body = `functionId=followShop&body={"follow":"false","shopId":"${shopId
-            || this.shopId}","award":"true","sourceRpc":"shop_app_home_follow"}&osVersion=13.7&appid=wh5&clientVersion=9.2.0&loginType=2&loginWQBiz=interact`
+        || this.shopId}","award":"true","sourceRpc":"shop_app_home_follow"}&osVersion=13.7&appid=wh5&clientVersion=9.2.0&loginType=2&loginWQBiz=interact`
         let headers = {
             'Accept': 'application/json, text/plain, */*',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -766,15 +769,15 @@ class Env {
             'Cookie': this.cookie
         }
         headers['User-Agent'] = `Mozilla/5.0 (iPhone; CPU iPhone OS 14_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.4(0x1800042c) NetType/4G Language/zh_CN miniProgram`
-        let { data } = await this.request(url, headers, body);
+        let {data} = await this.request(url, headers, body);
         this.log(data.msg)
         return data;
     }
 
-    async getShopInfo (venderId = this.venderId) {
+    async getShopInfo(venderId = this.venderId) {
         try {
             let url = `https://wq.jd.com/mshop/QueryShopMemberInfoJson?venderId=${venderId
-                || this.venderId}`
+            || this.venderId}`
             let headers = {
                 "Accept": "*/*",
                 "Accept-Encoding": "gzip, deflate, br",
@@ -789,7 +792,7 @@ class Env {
         }
     }
 
-    randomCallback (e = 1) {
+    randomCallback(e = 1) {
         let t = "abcdefghigklmnopqrstuvwsyz", a = t.length, n = '';
         for (let i = 0; i < e; i++) {
             n += t.charAt(Math.floor(Math.random() * a));
@@ -797,7 +800,7 @@ class Env {
         return "jsonpCBK" + n.toUpperCase()
     }
 
-    randomArray (arr, count) {
+    randomArray(arr, count) {
         count = count || arr.length
         let shuffled = arr.slice(0), i = arr.length, min = i - count, temp,
             index;
@@ -810,11 +813,11 @@ class Env {
         return shuffled.slice(min);
     }
 
-    now (fmt) {
+    now(fmt) {
         return format(Date.now(), fmt || 'yyyy-MM-dd HH:mm:ss.SSS')
     }
 
-    formatDate (date, fmt) {
+    formatDate(date, fmt) {
         // noinspection JSCheckFunctionSignatures
         return format(typeof date === 'object' ? date : new Date(
             typeof date === 'string' ? date * 1 : date),
@@ -822,17 +825,17 @@ class Env {
     }
 
     //yyyy-MM-dd HH:mm:ss
-    parseDate (date) {
+    parseDate(date) {
         let d = new Date(Date.parse(date.replace(/-/g, "/")));
         d.setHours(d.getHours() + 8)
         return d;
     }
 
-    timestamp () {
+    timestamp() {
         return new Date().getTime()
     }
 
-    _tk () {
+    _tk() {
         let id = function (n) {
             let src = 'abcdefghijklmnopqrstuvwxyz1234567890', res = '';
             for (let i = 0; i < n; i++) {
@@ -842,28 +845,27 @@ class Env {
         }(40), ts = Date.now().toString(), tk = this.md5(
             '' + decodeURIComponent(this.username) + ts + id
             + 'tPOamqCuk9NLgVPAljUyIHcPRmKlVxDy');
-        return { ts: ts, id: id, tk: tk }
+        return {ts: ts, id: id, tk: tk}
     }
 
-    ua (type = 'jd') {
+    ua(type = 'jd') {
         return JDAPP_USER_AGENTS[this.random(0, JDAPP_USER_AGENTS.length)]
     }
 
-    async sign (fn, body = {}) {
-        let b = { "fn": fn, "body": body };
-        let h = { "key": "fMQ8sw1y5zF4RZgT" }
+    async sign(fn, body = {}) {
+        let b = {"fn": fn, "body": body};
+        let h = {"token": apiToken}
         try {
-            let { data } = await this.request(`http://140.238.59.174:17840/sign`,
-                h, b);
-            return { fn: data.fn, sign: data.body };
+            let {data} = await this.request(apiSignUrl, h, b);
+            console.log(data)
+            return {fn: data.fn, sign: data.body};
         } catch (e) {
             console.log("sign接口异常")
-            //console.log("请自行配置sign实现")
         }
-        return { fn: "", sign: "" };
+        return {fn: "", sign: ""};
     }
 
-    async _algo () {
+    async _algo() {
         if (this.appId.length === 2) {
             if (this.domain.includes('lzkj') || this.domain.includes('lzdz')
                 || this.domain.includes('cjhy')) {
@@ -895,12 +897,12 @@ class Env {
                     "platform": "web",
                     "expandParams": ''
                 }), {
-                'Authority': 'cactus.jd.com',
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
-                'Content-Type': 'application/json',
-                'Origin': 'https://st.jingxi.com',
-                'Referer': 'https://st.jingxi.com/',
-            });
+                    'Authority': 'cactus.jd.com',
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                    'Content-Type': 'application/json',
+                    'Origin': 'https://st.jingxi.com',
+                    'Referer': 'https://st.jingxi.com/',
+                });
             return {
                 fp: fp.toString(),
                 tk: data?.data?.result?.tk || data?.result?.tk,
@@ -911,7 +913,7 @@ class Env {
         }
     }
 
-    async isvObfuscator () {
+    async isvObfuscator() {
         let url = `https://api.m.jd.com/client.action?functionId=isvObfuscator`
         let body = ''
         switch (this.domain) {
@@ -935,11 +937,11 @@ class Env {
             "Cookie": this.cookie,
             "User-Agent": this.UA,
         }
-        let { data } = await this.request(url, headers, body)
+        let {data} = await this.request(url, headers, body)
         return data;
     }
 
-    async api (fn, body) {
+    async api(fn, body) {
         let url = `https://${this.domain}/${fn}`
         let ck = `IsvToken=${this.Token};` + this.lz + (this.Pin
             && "AUTH_C_USER=" + this.Pin + ";" || "")
@@ -956,11 +958,11 @@ class Env {
             "Referer": `${this.activityUrl}&sid=&un_area=`,
             "User-Agent": this.UA
         }
-        let { data } = await this.request(url, headers, body);
+        let {data} = await this.request(url, headers, body);
         return data;
     }
 
-    async wxStop (err) {
+    async wxStop(err) {
         let flag = false;
         if (!err) {
             return flag
@@ -978,7 +980,7 @@ class Env {
         return flag;
     }
 
-    async sendMessage (chat_id, text, count = 1) {
+    async sendMessage(chat_id, text, count = 1) {
         let url = `https://api.telegram.org/bot${process.env.TG_BOT_TOKEN}/sendMessage`
         let body = {
             'chat_id': chat_id,
@@ -989,7 +991,7 @@ class Env {
             'Content-Type': 'application/json',
             'Cookie': '10089'
         }
-        let { data } = await this.request(url, headers, body);
+        let {data} = await this.request(url, headers, body);
         this.log('发送数据', text)
         if (!data?.ok && count === 1) {
             $.log('重试中', text)
@@ -999,4 +1001,4 @@ class Env {
     }
 }
 
-module.exports = { Env, CryptoJS };
+module.exports = {Env, CryptoJS};
